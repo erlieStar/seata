@@ -60,6 +60,9 @@ import static io.seata.common.DefaultValues.DEFAULT_DISABLE_GLOBAL_TRANSACTION;
  * The type Global transaction scanner.
  *
  * @author slievrly
+ *
+ * 重写 AbstractAutoProxyCreator#wrapIfNecessary 做切面代理
+ * 重写 InitializingBean#afterPropertiesSet 启动客户端
  */
 public class GlobalTransactionScanner extends AbstractAutoProxyCreator
     implements ConfigurationChangeListener, InitializingBean, ApplicationContextAware, DisposableBean {
@@ -186,6 +189,9 @@ public class GlobalTransactionScanner extends AbstractAutoProxyCreator
 
     /**
      * 客户端初始化
+     * 初始化tm客户端，并向server注册
+     * 初始化rm客户端，并向server注册
+     * 注册shutdownHook，优雅关闭tm和rm
      */
     private void initClient() {
         if (LOGGER.isInfoEnabled()) {
@@ -248,6 +254,7 @@ public class GlobalTransactionScanner extends AbstractAutoProxyCreator
     protected Object wrapIfNecessary(Object bean, String beanName, Object cacheKey) {
         try {
             synchronized (PROXYED_SET) {
+                // 已经处理过就不在处理
                 if (PROXYED_SET.contains(beanName)) {
                     return bean;
                 }

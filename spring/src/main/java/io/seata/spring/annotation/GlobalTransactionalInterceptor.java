@@ -146,9 +146,11 @@ public class GlobalTransactionalInterceptor implements ConfigurationChangeListen
             final GlobalLock globalLockAnnotation = getAnnotation(method, targetClass, GlobalLock.class);
             boolean localDisable = disable || (degradeCheck && degradeNum >= degradeCheckAllowTimes);
             if (!localDisable) {
+                // 如果有@GlobalTransactional注解
                 if (globalTransactionalAnnotation != null) {
                     return handleGlobalTransaction(methodInvocation, globalTransactionalAnnotation);
                 } else if (globalLockAnnotation != null) {
+                    // 如果有@GlobalLock注解，用于非at模式的数据库加锁
                     return handleGlobalLock(methodInvocation, globalLockAnnotation);
                 }
             }
