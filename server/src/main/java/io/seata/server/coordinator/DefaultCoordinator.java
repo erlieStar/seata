@@ -121,15 +121,19 @@ public class DefaultCoordinator extends AbstractTCInboundHandler implements Tran
     private static final boolean ROLLBACK_RETRY_TIMEOUT_UNLOCK_ENABLE = ConfigurationFactory.getInstance().getBoolean(
         ConfigurationKeys.ROLLBACK_RETRY_TIMEOUT_UNLOCK_ENABLE, false);
 
+    // 重试rollback定时任务，每隔1s执行一次
     private ScheduledThreadPoolExecutor retryRollbacking = new ScheduledThreadPoolExecutor(1,
         new NamedThreadFactory("RetryRollbacking", 1));
 
+    // 重试commit定时任务，每隔1s执行一次
     private ScheduledThreadPoolExecutor retryCommitting = new ScheduledThreadPoolExecutor(1,
         new NamedThreadFactory("RetryCommitting", 1));
 
+    // 异步commit定时任务，每隔1s执行一次
     private ScheduledThreadPoolExecutor asyncCommitting = new ScheduledThreadPoolExecutor(1,
         new NamedThreadFactory("AsyncCommitting", 1));
 
+    // 检测超时任务，执行超时逻辑，每隔1s执行一次
     private ScheduledThreadPoolExecutor timeoutCheck = new ScheduledThreadPoolExecutor(1,
         new NamedThreadFactory("TxTimeoutCheck", 1));
 

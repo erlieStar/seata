@@ -67,6 +67,7 @@ public class ActionInterceptorHandler {
         actionContext.setActionName(actionName);
 
         //Creating Branch Record
+        // 封装tcc行为日志，并注册分支事务
         String branchId = doTccActionLogStore(method, arguments, businessAction, actionContext);
         actionContext.setBranchId(branchId);
         //MDC put branchId
@@ -118,6 +119,7 @@ public class ActionInterceptorHandler {
         String applicationContextStr = JSON.toJSONString(applicationContext);
         try {
             //registry branch record
+            // 向tc注册分支事务
             Long branchId = DefaultResourceManager.get().branchRegister(BranchType.TCC, actionName, null, xid,
                 applicationContextStr, null);
             return String.valueOf(branchId);

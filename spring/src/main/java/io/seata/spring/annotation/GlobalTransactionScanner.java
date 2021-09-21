@@ -184,6 +184,9 @@ public class GlobalTransactionScanner extends AbstractAutoProxyCreator
         ShutdownHook.getInstance().destroyAll();
     }
 
+    /**
+     * 客户端初始化
+     */
     private void initClient() {
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info("Initializing Global Transaction Clients ... ");
@@ -237,6 +240,9 @@ public class GlobalTransactionScanner extends AbstractAutoProxyCreator
      * @see io.seata.rm.tcc.remoting.RemotingParser // Remote TCC service parser
      * Corresponding interceptor:
      * @see io.seata.spring.tcc.TccActionInterceptor // the interceptor of TCC mode
+     *
+     * 为 TwoPhaseBusinessAction 注解生成 TccActionInterceptor 代理
+     * 为 GlobalTransactional 注解生成 GlobalTransactionalInterceptor 代理
      */
     @Override
     protected Object wrapIfNecessary(Object bean, String beanName, Object cacheKey) {
@@ -247,6 +253,7 @@ public class GlobalTransactionScanner extends AbstractAutoProxyCreator
                 }
                 interceptor = null;
                 //check TCC proxy
+                // 当前bean是否是tcc的实现类
                 if (TCCBeanParserUtils.isTccAutoProxy(bean, beanName, applicationContext)) {
                     //TCC interceptor, proxy bean of sofa:reference/dubbo:reference, and LocalTCC
                     interceptor = new TccActionInterceptor(TCCBeanParserUtils.getRemotingDesc(beanName));

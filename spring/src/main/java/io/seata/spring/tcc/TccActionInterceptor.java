@@ -74,6 +74,7 @@ public class TccActionInterceptor implements MethodInterceptor, ConfigurationCha
 
     @Override
     public Object invoke(final MethodInvocation invocation) throws Throwable {
+        // 没有开启tcc事务，全局事务不生效
         if (!RootContext.inGlobalTransaction() || disable || RootContext.inSagaBranch()) {
             //not in transaction
             return invocation.proceed();
@@ -81,6 +82,7 @@ public class TccActionInterceptor implements MethodInterceptor, ConfigurationCha
         Method method = getActionInterfaceMethod(invocation);
         TwoPhaseBusinessAction businessAction = method.getAnnotation(TwoPhaseBusinessAction.class);
         //try method
+        // 带有@TwoPhaseBusinessAction注解的方法才会执行拦截逻辑
         if (businessAction != null) {
             //save the xid
             String xid = RootContext.getXID();
