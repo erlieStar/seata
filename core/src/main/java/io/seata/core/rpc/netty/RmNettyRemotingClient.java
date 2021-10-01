@@ -267,6 +267,7 @@ public final class RmNettyRemotingClient extends AbstractNettyRemotingClient {
         return transactionServiceGroup;
     }
 
+    // 设置消息处理器
     private void registerProcessor() {
         // 1.registry rm client handle branch commit processor
         RmBranchCommitProcessor rmBranchCommitProcessor = new RmBranchCommitProcessor(getTransactionMessageHandler(), this);

@@ -123,6 +123,9 @@ public class DefaultCore implements Core {
         return getCore(branchSession.getBranchType()).branchRollback(globalSession, branchSession);
     }
 
+    /**
+     * 开启全局事务
+     */
     @Override
     public String begin(String applicationId, String transactionServiceGroup, String name, int timeout)
         throws TransactionException {
@@ -140,6 +143,9 @@ public class DefaultCore implements Core {
         return session.getXid();
     }
 
+    /**
+     * 提交全局事务
+     */
     @Override
     public GlobalStatus commit(String xid) throws TransactionException {
         GlobalSession globalSession = SessionHolder.findGlobalSession(xid);
@@ -151,6 +157,7 @@ public class DefaultCore implements Core {
 
         boolean shouldCommit = SessionHolder.lockAndExecute(globalSession, () -> {
             // Highlight: Firstly, close the session, then no more branch can be registered.
+            // 先关闭session，再清楚，这样其他分支不能注册
             globalSession.closeAndClean();
             if (globalSession.getStatus() == GlobalStatus.Begin) {
                 if (globalSession.canBeCommittedAsync()) {
@@ -178,6 +185,9 @@ public class DefaultCore implements Core {
         }
     }
 
+    /**
+     * 同步提交全局事务
+     */
     @Override
     public boolean doGlobalCommit(GlobalSession globalSession, boolean retrying) throws TransactionException {
         boolean success = true;

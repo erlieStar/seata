@@ -77,9 +77,13 @@ public class SessionHolder {
      */
     public static final String DEFAULT_SESSION_STORE_FILE_DIR = "sessionStore";
 
+    // 保存了所有的GlobalSession
     private static SessionManager ROOT_SESSION_MANAGER;
+    // 需要异步commit的GlobalSession
     private static SessionManager ASYNC_COMMITTING_SESSION_MANAGER;
+    // 需要重试commit的GlobalSession
     private static SessionManager RETRY_COMMITTING_SESSION_MANAGER;
+    // 需要重试roollback的GlobalSession
     private static SessionManager RETRY_ROLLBACKING_SESSION_MANAGER;
 
     /**

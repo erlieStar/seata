@@ -84,6 +84,7 @@ public class NettyRemotingServer extends AbstractNettyRemotingServer {
         channel.close();
     }
 
+    // 注册消息处理器
     private void registerProcessor() {
         // 1. registry on request message processor
         ServerOnRequestProcessor onRequestProcessor =

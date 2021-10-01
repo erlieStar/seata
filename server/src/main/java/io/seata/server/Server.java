@@ -60,9 +60,11 @@ public class Server {
         //initialize the parameter parser
         //Note that the parameter parser should always be the first line to execute.
         //Because, here we need to parse the parameters needed for startup.
+        // 解析启动和配置文件中的各种参数
         ParameterParser parameterParser = new ParameterParser(args);
 
         //initialize the metrics
+        // 利用spi获取Registry对象
         MetricsManager.get().init();
 
         System.setProperty(ConfigurationKeys.STORE_MODE, parameterParser.getStoreMode());
@@ -75,10 +77,14 @@ public class Server {
         NettyRemotingServer nettyRemotingServer = new NettyRemotingServer(workingThreads);
         //server port
         nettyRemotingServer.setListenPort(parameterParser.getPort());
+        // 将serverNode作为雪花算法中的workerId
         UUIDGenerator.init(parameterParser.getServerNode());
         //log store mode : file, db, redis
+        // SessionHolder负责事务日志的持久化存储
+        // 设置存储模式，有三种可选类型，file，db，redis
         SessionHolder.init(parameterParser.getStoreMode());
 
+        // 创建事务协调器
         DefaultCoordinator coordinator = new DefaultCoordinator(nettyRemotingServer);
         coordinator.init();
         nettyRemotingServer.setHandler(coordinator);
@@ -95,6 +101,7 @@ public class Server {
         XID.setPort(nettyRemotingServer.getListenPort());
 
         try {
+            // 启动nettyServer并阻塞在这里
             nettyRemotingServer.init();
         } catch (Throwable e) {
             logger.error("nettyServer init error:{}", e.getMessage(), e);

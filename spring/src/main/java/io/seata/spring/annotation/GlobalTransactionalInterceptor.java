@@ -64,6 +64,7 @@ import static io.seata.common.DefaultValues.DEFAULT_TM_DEGRADE_CHECK_PERIOD;
  * The type Global transactional interceptor.
  *
  * @author slievrly
+ * 方法上有 @GlobalTransactional 或者 @GlobalLock
  */
 public class GlobalTransactionalInterceptor implements ConfigurationChangeListener, MethodInterceptor {
 
@@ -194,6 +195,9 @@ public class GlobalTransactionalInterceptor implements ConfigurationChangeListen
                     return formatMethod(methodInvocation.getMethod());
                 }
 
+                /**
+                 * 获取事务信息
+                 */
                 @Override
                 public TransactionInfo getTransactionInfo() {
                     // reset the value of timeout

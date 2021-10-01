@@ -219,6 +219,9 @@ public final class TmNettyRemotingClient extends AbstractNettyRemotingClient {
         };
     }
 
+    /**
+     * 注册回复消息处理器，典型的策略模式
+     */
     private void registerProcessor() {
         // 1.registry TC response processor
         ClientOnResponseProcessor onResponseProcessor =

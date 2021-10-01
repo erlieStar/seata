@@ -29,6 +29,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * The type Default failure handler.
+ * 基于时间轮算法重试失败任务
  *
  * @author slievrly
  */

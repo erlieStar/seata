@@ -400,6 +400,7 @@ public class DefaultCoordinator extends AbstractTCInboundHandler implements Tran
      * Init.
      */
     public void init() {
+        // 重试rollback定时任务
         retryRollbacking.scheduleAtFixedRate(() -> {
             boolean lock = SessionHolder.retryRollbackingLock();
             if (lock) {
@@ -413,6 +414,7 @@ public class DefaultCoordinator extends AbstractTCInboundHandler implements Tran
             }
         }, 0, ROLLBACKING_RETRY_PERIOD, TimeUnit.MILLISECONDS);
 
+        // 重试commit定时任务
         retryCommitting.scheduleAtFixedRate(() -> {
             boolean lock = SessionHolder.retryCommittingLock();
             if (lock) {
@@ -426,6 +428,7 @@ public class DefaultCoordinator extends AbstractTCInboundHandler implements Tran
             }
         }, 0, COMMITTING_RETRY_PERIOD, TimeUnit.MILLISECONDS);
 
+        // 异步commit定时任务
         asyncCommitting.scheduleAtFixedRate(() -> {
             boolean lock = SessionHolder.asyncCommittingLock();
             if (lock) {
@@ -439,6 +442,7 @@ public class DefaultCoordinator extends AbstractTCInboundHandler implements Tran
             }
         }, 0, ASYNC_COMMITTING_RETRY_PERIOD, TimeUnit.MILLISECONDS);
 
+        // 超时任务检测
         timeoutCheck.scheduleAtFixedRate(() -> {
             boolean lock = SessionHolder.txTimeoutCheckLock();
             if (lock) {
@@ -452,6 +456,7 @@ public class DefaultCoordinator extends AbstractTCInboundHandler implements Tran
             }
         }, 0, TIMEOUT_RETRY_PERIOD, TimeUnit.MILLISECONDS);
 
+        // 删除undolog定时任务
         undoLogDelete.scheduleAtFixedRate(() -> {
             boolean lock = SessionHolder.undoLogDeleteLock();
             if (lock) {

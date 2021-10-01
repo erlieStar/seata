@@ -44,6 +44,9 @@ import java.util.concurrent.TimeoutException;
  */
 public class DefaultTransactionManager implements TransactionManager {
 
+    /**
+     * tm向tc发送一个GlobalBeginRequest的请求，获取到xid
+     */
     @Override
     public String begin(String applicationId, String transactionServiceGroup, String name, int timeout)
         throws TransactionException {

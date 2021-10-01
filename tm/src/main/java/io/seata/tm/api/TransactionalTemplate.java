@@ -42,6 +42,8 @@ public class TransactionalTemplate {
 
     /**
      * Execute object.
+     * 执行事务方法
+     * 从这可以看到二阶段的思想，提交和回滚
      *
      * @param business the business
      * @return the object
@@ -58,6 +60,7 @@ public class TransactionalTemplate {
         GlobalTransaction tx = GlobalTransactionContext.getCurrent();
 
         // 1.2 Handle the transaction propagation.
+        // 获取隔离级别
         Propagation propagation = txInfo.getPropagation();
         SuspendedResourcesHolder suspendedResourcesHolder = null;
         try {
@@ -120,6 +123,7 @@ public class TransactionalTemplate {
             try {
                 // 2. If the tx role is 'GlobalTransactionRole.Launcher', send the request of beginTransaction to TC,
                 //    else do nothing. Of course, the hooks will still be triggered.
+                // 开始事务
                 beginTransaction(txInfo, tx);
 
                 Object rs;
@@ -133,6 +137,7 @@ public class TransactionalTemplate {
                 }
 
                 // 4. everything is fine, commit.
+                // 提交事务
                 commitTransaction(tx);
 
                 return rs;
@@ -212,6 +217,7 @@ public class TransactionalTemplate {
 
     private void beginTransaction(TransactionInfo txInfo, GlobalTransaction tx) throws TransactionalExecutor.ExecutionException {
         try {
+            // triggerBeforeBegin 和 triggerAfterBegin 是模版模式的应用，可以执行用户的自定方法
             triggerBeforeBegin();
             tx.begin(txInfo.getTimeOut(), txInfo.getName());
             triggerAfterBegin();
