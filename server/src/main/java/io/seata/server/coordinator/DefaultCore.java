@@ -157,7 +157,7 @@ public class DefaultCore implements Core {
 
         boolean shouldCommit = SessionHolder.lockAndExecute(globalSession, () -> {
             // Highlight: Firstly, close the session, then no more branch can be registered.
-            // 先关闭session，再清楚，这样其他分支不能注册
+            // 先关闭session，再清除，这样其他分支不能注册
             globalSession.closeAndClean();
             if (globalSession.getStatus() == GlobalStatus.Begin) {
                 if (globalSession.canBeCommittedAsync()) {

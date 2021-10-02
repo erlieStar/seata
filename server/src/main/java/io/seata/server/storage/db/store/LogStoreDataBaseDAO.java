@@ -91,8 +91,10 @@ public class LogStoreDataBaseDAO implements LogStore {
      */
     public LogStoreDataBaseDAO(DataSource logStoreDataSource) {
         this.logStoreDataSource = logStoreDataSource;
+        // global_table表
         globalTable = CONFIG.getConfig(ConfigurationKeys.STORE_DB_GLOBAL_TABLE,
             DEFAULT_STORE_DB_GLOBAL_TABLE);
+        // branch_table表
         branchTable = CONFIG.getConfig(ConfigurationKeys.STORE_DB_BRANCH_TABLE,
             DEFAULT_STORE_DB_BRANCH_TABLE);
         dbType = CONFIG.getConfig(ConfigurationKeys.STORE_DB_TYPE);
@@ -106,6 +108,9 @@ public class LogStoreDataBaseDAO implements LogStore {
         initTransactionNameSize();
     }
 
+    /**
+     * 根据xid从global_table中查询记录
+     */
     @Override
     public GlobalTransactionDO queryGlobalTransactionDO(String xid) {
         String sql = LogStoreSqlsFactory.getLogStoreSqls(dbType).getQueryGlobalTransactionSQL(globalTable);
@@ -185,6 +190,9 @@ public class LogStoreDataBaseDAO implements LogStore {
         }
     }
 
+    /**
+     * 往global_table插入记录
+     */
     @Override
     public boolean insertGlobalTransactionDO(GlobalTransactionDO globalTransactionDO) {
         String sql = LogStoreSqlsFactory.getLogStoreSqls(dbType).getInsertGlobalTransactionSQL(globalTable);
@@ -214,6 +222,9 @@ public class LogStoreDataBaseDAO implements LogStore {
         }
     }
 
+    /**
+     * 根据xid更新status
+     */
     @Override
     public boolean updateGlobalTransactionDO(GlobalTransactionDO globalTransactionDO) {
         String sql = LogStoreSqlsFactory.getLogStoreSqls(dbType).getUpdateGlobalTransactionStatusSQL(globalTable);
@@ -233,6 +244,9 @@ public class LogStoreDataBaseDAO implements LogStore {
         }
     }
 
+    /**
+     * 根据xid删除记录
+     */
     @Override
     public boolean deleteGlobalTransactionDO(GlobalTransactionDO globalTransactionDO) {
         String sql = LogStoreSqlsFactory.getLogStoreSqls(dbType).getDeleteGlobalTransactionSQL(globalTable);
