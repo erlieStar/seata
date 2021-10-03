@@ -114,6 +114,7 @@ public abstract class AbstractNettyRemotingClient extends AbstractNettyRemoting 
                 clientChannelManager.reconnect(getTransactionServiceGroup());
             }
         }, SCHEDULE_DELAY_MILLS, SCHEDULE_INTERVAL_MILLS, TimeUnit.MILLISECONDS);
+        // 是否允许批量发送请求
         if (NettyClientConfig.isEnableClientBatchSendRequest()) {
             mergeSendExecutorService = new ThreadPoolExecutor(MAX_MERGE_SEND_THREAD,
                 MAX_MERGE_SEND_THREAD,
@@ -307,6 +308,7 @@ public abstract class AbstractNettyRemotingClient extends AbstractNettyRemoting 
 
     /**
      * The type Merged send runnable.
+     * 把basketMap中的消息取出来，封装为一个MergedWarpMessage，然后发送出去
      */
     private class MergedSendRunnable implements Runnable {
 

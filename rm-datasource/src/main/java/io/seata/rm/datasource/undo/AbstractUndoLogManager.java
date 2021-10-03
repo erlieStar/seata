@@ -259,9 +259,11 @@ public abstract class AbstractUndoLogManager implements UndoLogManager {
 
         for (; ; ) {
             try {
+                // 获取原生数据源的Connection
                 conn = dataSourceProxy.getPlainConnection();
 
                 // The entire undo process should run in a local transaction.
+                // 关闭自动提交，确保最终业务sql操作和undo_log操作一起提交
                 if (originalAutoCommit = conn.getAutoCommit()) {
                     conn.setAutoCommit(false);
                 }

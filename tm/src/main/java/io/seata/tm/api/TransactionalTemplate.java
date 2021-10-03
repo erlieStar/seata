@@ -60,7 +60,7 @@ public class TransactionalTemplate {
         GlobalTransaction tx = GlobalTransactionContext.getCurrent();
 
         // 1.2 Handle the transaction propagation.
-        // 获取隔离级别
+        // 获取传播行为
         Propagation propagation = txInfo.getPropagation();
         SuspendedResourcesHolder suspendedResourcesHolder = null;
         try {

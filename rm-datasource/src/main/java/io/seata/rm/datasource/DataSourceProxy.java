@@ -100,6 +100,7 @@ public class DataSourceProxy extends AbstractDataSourceProxy implements Resource
         this.resourceGroupId = resourceGroupId;
         try (Connection connection = dataSource.getConnection()) {
             jdbcUrl = connection.getMetaData().getURL();
+            // 根据 jdbcUrl 获取数据库类型
             dbType = JdbcUtils.getDbType(jdbcUrl);
             if (JdbcConstants.ORACLE.equals(dbType)) {
                 userName = connection.getMetaData().getUserName();

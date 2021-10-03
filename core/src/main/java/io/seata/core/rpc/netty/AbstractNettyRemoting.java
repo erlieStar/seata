@@ -106,6 +106,9 @@ public abstract class AbstractNettyRemoting implements Disposable {
 
     protected final List<RpcHook> rpcHooks = EnhancedServiceLoader.loadAll(RpcHook.class);
 
+    /**
+     * 不断检测消息发送结果，如果超时，则移除消息，然后把消息结果置为空
+     */
     public void init() {
         timerExecutor.scheduleAtFixedRate(new Runnable() {
             @Override

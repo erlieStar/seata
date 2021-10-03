@@ -93,6 +93,7 @@ class NettyClientChannelManager {
      */
     Channel acquireChannel(String serverAddress) {
         Channel channelToServer = channels.get(serverAddress);
+        // 当前地址已经存在连接，直接返回
         if (channelToServer != null) {
             channelToServer = getExistAliveChannel(channelToServer, serverAddress);
             if (channelToServer != null) {
@@ -163,6 +164,7 @@ class NettyClientChannelManager {
     void reconnect(String transactionServiceGroup) {
         List<String> availList = null;
         try {
+            // 获得与事务分组对应的集群中每台机器地址
             availList = getAvailServerList(transactionServiceGroup);
         } catch (Exception e) {
             LOGGER.error("Failed to get available servers: {}", e.getMessage(), e);
@@ -184,8 +186,10 @@ class NettyClientChannelManager {
             }
             return;
         }
+        // 遍历tc服务器地址
         for (String serverAddress : availList) {
             try {
+                // 建立与tc的连接
                 acquireChannel(serverAddress);
             } catch (Exception e) {
                 LOGGER.error("{} can not connect to {} cause:{}",FrameworkErrorCode.NetConnect.getErrCode(), serverAddress, e.getMessage(), e);
@@ -207,6 +211,7 @@ class NettyClientChannelManager {
 
     private Channel doConnect(String serverAddress) {
         Channel channelToServer = channels.get(serverAddress);
+        // 当前地址已经存在连接
         if (channelToServer != null && channelToServer.isActive()) {
             return channelToServer;
         }
