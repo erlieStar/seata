@@ -199,6 +199,7 @@ public class DefaultCore implements Core {
         if (globalSession.isSaga()) {
             success = getCore(BranchType.SAGA).doGlobalCommit(globalSession, retrying);
         } else {
+            // 取出所有的分支事务，然后提交
             Boolean result = SessionHelper.forEach(globalSession.getSortedBranches(), branchSession -> {
                 // if not retrying, skip the canBeCommittedAsync branches
                 if (!retrying && branchSession.canBeCommittedAsync()) {

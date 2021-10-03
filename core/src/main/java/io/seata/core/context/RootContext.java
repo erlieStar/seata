@@ -97,7 +97,7 @@ public class RootContext {
 
     /**
      * Bind xid.
-     *
+     * 恢复全局事务
      * @param xid the xid
      */
     public static void bind(@Nonnull String xid) {
@@ -129,6 +129,7 @@ public class RootContext {
 
     /**
      * Unbind xid.
+     * 挂起（暂停）事务
      *
      * @return the previous xid or null
      */

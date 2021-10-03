@@ -31,6 +31,7 @@ import org.slf4j.LoggerFactory;
 
 /**
  * The type Transaction propagation filter.
+ * http://seata.io/zh-cn/docs/user/microservice.html
  *
  * @author sharajava
  */
@@ -73,6 +74,7 @@ public class AlibabaDubboTransactionPropagationFilter implements Filter {
         } finally {
             if (bind) {
                 BranchType previousBranchType = RootContext.getBranchType();
+                // 完成对xid的清理
                 String unbindXid = RootContext.unbind();
                 if (BranchType.TCC == previousBranchType) {
                     RootContext.unbindBranchType();
