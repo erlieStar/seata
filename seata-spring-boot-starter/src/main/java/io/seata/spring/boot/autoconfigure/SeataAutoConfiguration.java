@@ -39,6 +39,7 @@ import static io.seata.spring.boot.autoconfigure.StarterConstants.SEATA_PREFIX;
 public class SeataAutoConfiguration {
     private static final Logger LOGGER = LoggerFactory.getLogger(SeataAutoConfiguration.class);
 
+    // 流程异常处理
     @Bean(BEAN_NAME_FAILURE_HANDLER)
     @ConditionalOnMissingBean(FailureHandler.class)
     public FailureHandler failureHandler() {

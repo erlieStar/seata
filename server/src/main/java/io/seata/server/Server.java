@@ -48,6 +48,7 @@ public class Server {
      */
     public static void main(String[] args) throws IOException {
         // get port first, use to logback.xml
+        // 获取监听的端口
         int port = PortHelper.getPort(args);
         System.setProperty(ConfigurationKeys.SERVER_PORT, Integer.toString(port));
 
@@ -64,7 +65,7 @@ public class Server {
         ParameterParser parameterParser = new ParameterParser(args);
 
         //initialize the metrics
-        // 利用spi获取Registry对象
+        // 监控相关
         MetricsManager.get().init();
 
         System.setProperty(ConfigurationKeys.STORE_MODE, parameterParser.getStoreMode());

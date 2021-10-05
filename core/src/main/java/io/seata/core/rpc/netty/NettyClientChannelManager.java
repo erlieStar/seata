@@ -52,6 +52,7 @@ class NettyClientChannelManager {
 
     private final ConcurrentMap<String, NettyPoolKey> poolKeyMap = new ConcurrentHashMap<>();
 
+    // 保存了地址和对应的channel关系
     private final ConcurrentMap<String, Channel> channels = new ConcurrentHashMap<>();
 
     private final GenericKeyedObjectPool<NettyPoolKey, Channel> nettyClientKeyPool;
