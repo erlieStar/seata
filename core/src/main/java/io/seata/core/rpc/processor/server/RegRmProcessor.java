@@ -76,6 +76,7 @@ public class RegRmProcessor implements RemotingProcessor {
             errorInfo = exx.getMessage();
             LOGGER.error("RM register fail, error message:{}", errorInfo);
         }
+        // 消息内容
         RegisterRMResponse response = new RegisterRMResponse(isSuccess);
         if (StringUtils.isNotEmpty(errorInfo)) {
             response.setMsg(errorInfo);

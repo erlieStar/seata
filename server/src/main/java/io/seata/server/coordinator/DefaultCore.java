@@ -148,10 +148,12 @@ public class DefaultCore implements Core {
      */
     @Override
     public GlobalStatus commit(String xid) throws TransactionException {
+        // 根据xid找到全局事务对象GlobalSession
         GlobalSession globalSession = SessionHolder.findGlobalSession(xid);
         if (globalSession == null) {
             return GlobalStatus.Finished;
         }
+        // 添加监听器
         globalSession.addSessionLifecycleListener(SessionHolder.getRootSessionManager());
         // just lock changeStatus
 

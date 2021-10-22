@@ -29,6 +29,7 @@ import java.util.concurrent.TimeUnit;
 
 /**
  * handle ServerOnRequestProcessor and ServerOnResponseProcessor log print.
+ * 批量打印日志
  *
  * @author zhangchenghui.dev@gmail.com
  * @since 1.3.0

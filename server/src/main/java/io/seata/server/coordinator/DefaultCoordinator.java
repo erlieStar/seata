@@ -69,6 +69,7 @@ import org.slf4j.MDC;
 
 /**
  * The type Default coordinator.
+ * 参考博客：https://blog.csdn.net/weixin_38308374/article/details/108631548
  */
 public class DefaultCoordinator extends AbstractTCInboundHandler implements TransactionMessageHandler, Disposable {
 
@@ -225,6 +226,7 @@ public class DefaultCoordinator extends AbstractTCInboundHandler implements Tran
      * Timeout check.
      *
      * @throws TransactionException the transaction exception
+     * 事务处于开始状态，且已经超时，将状态设置为超时回滚，将状态改为TimeoutRollbacking，然后放入重试会话管理器
      */
     protected void timeoutCheck() throws TransactionException {
         Collection<GlobalSession> allSessions = SessionHolder.getRootSessionManager().allSessions();
@@ -285,7 +287,7 @@ public class DefaultCoordinator extends AbstractTCInboundHandler implements Tran
         SessionHelper.forEach(rollbackingSessions, rollbackingSession -> {
             try {
                 // prevent repeated rollback
-                // 有一个时间间隔
+                // 事务状态为回滚中，事务从创建到此时没超过12s，跳过对事务的处理
                 if (rollbackingSession.getStatus().equals(GlobalStatus.Rollbacking) && !rollbackingSession.isDeadSession()) {
                     //The function of this 'return' is 'continue'.
                     return;
@@ -349,6 +351,7 @@ public class DefaultCoordinator extends AbstractTCInboundHandler implements Tran
 
     /**
      * Handle async committing.
+     * 全局事务异步提交，当分支事务执行无误的情况下，会自动提交，相对来说全局事务的提交已经没有那么重要了，全局事务提交成功与否都不对业务数据造成影响。
      */
     protected void handleAsyncCommitting() {
         Collection<GlobalSession> asyncCommittingSessions = SessionHolder.getAsyncCommittingSessionManager()

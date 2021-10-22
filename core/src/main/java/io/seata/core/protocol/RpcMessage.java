@@ -28,8 +28,11 @@ import java.util.Map;
 public class RpcMessage {
 
     private int id;
+    // 消息类型
     private byte messageType;
+    // 编解码方式
     private byte codec;
+    // 压缩方式
     private byte compressor;
     private Map<String, String> headMap = new HashMap<>();
     private Object body;
