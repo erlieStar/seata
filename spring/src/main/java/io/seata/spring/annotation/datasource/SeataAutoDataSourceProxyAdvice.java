@@ -53,6 +53,8 @@ public class SeataAutoDataSourceProxyAdvice implements MethodInterceptor, Introd
 
     @Override
     public Object invoke(MethodInvocation invocation) throws Throwable {
+        // 没有加@GlobalLock
+        // 事务模式不一致，不进行代理
         if (!RootContext.requireGlobalLock() && dataSourceProxyMode != RootContext.getBranchType()) {
             return invocation.proceed();
         }

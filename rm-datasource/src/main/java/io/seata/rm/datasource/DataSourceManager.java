@@ -51,6 +51,9 @@ public class DataSourceManager extends AbstractResourceManager {
 
     private final Map<String, Resource> dataSourceCache = new ConcurrentHashMap<>();
 
+    /**
+     * 是否能获取到全局锁
+     */
     @Override
     public boolean lockQuery(BranchType branchType, String resourceId, String xid, String lockKeys) throws TransactionException {
         GlobalLockQueryRequest request = new GlobalLockQueryRequest();
@@ -108,6 +111,7 @@ public class DataSourceManager extends AbstractResourceManager {
     @Override
     public BranchStatus branchCommit(BranchType branchType, String xid, long branchId, String resourceId,
                                      String applicationData) throws TransactionException {
+        // 将分支提交信息包装成 Phase2Context 插入内存中的异步提交队列，异步删除undoLog
         return asyncWorker.branchCommit(xid, branchId, resourceId);
     }
 
@@ -119,6 +123,7 @@ public class DataSourceManager extends AbstractResourceManager {
             throw new ShouldNeverHappenException();
         }
         try {
+            // 根据 undoLog 构造回滚 sql 并执行
             UndoLogManagerFactory.getUndoLogManager(dataSourceProxy.getDbType()).undo(dataSourceProxy, xid, branchId);
         } catch (TransactionException te) {
             StackTraceLogger.info(LOGGER, te,

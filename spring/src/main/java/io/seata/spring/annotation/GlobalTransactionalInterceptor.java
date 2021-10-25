@@ -151,7 +151,7 @@ public class GlobalTransactionalInterceptor implements ConfigurationChangeListen
                 if (globalTransactionalAnnotation != null) {
                     return handleGlobalTransaction(methodInvocation, globalTransactionalAnnotation);
                 } else if (globalLockAnnotation != null) {
-                    // 如果有@GlobalLock注解，用于非at模式的数据库加锁
+                    // 如果有@GlobalLock注解
                     return handleGlobalLock(methodInvocation, globalLockAnnotation);
                 }
             }

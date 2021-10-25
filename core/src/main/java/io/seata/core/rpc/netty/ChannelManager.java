@@ -127,9 +127,14 @@ public class ChannelManager {
             request.getApplicationId(),
             request.getTransactionServiceGroup(),
             null, channel);
+        // 将 <Channel,RpcContext> 保存在 IDENTIFIED_CHANNELS
         rpcContext.holdInIdentifiedChannels(IDENTIFIED_CHANNELS);
+        // clientIdentified = 客户端应用名 + 客户端ip
         String clientIdentified = rpcContext.getApplicationId() + Constants.CLIENT_ID_SPLIT_CHAR
             + ChannelUtil.getClientIpFromChannel(channel);
+        // 以下为构建TM_CHANNELS的过程
+        // TM_CHANNELS记录所有的TM连接信息
+        // <<客户端应用名+客户端ip><客户端端口号,对应的RpcContext对象>>
         ConcurrentMap<Integer, RpcContext> clientIdentifiedMap = CollectionUtils.computeIfAbsent(TM_CHANNELS,
             clientIdentified, key -> new ConcurrentHashMap<>());
         rpcContext.holdInClientChannels(clientIdentifiedMap);
@@ -148,15 +153,18 @@ public class ChannelManager {
         Set<String> dbkeySet = dbKeytoSet(resourceManagerRequest.getResourceIds());
         RpcContext rpcContext;
         if (!IDENTIFIED_CHANNELS.containsKey(channel)) {
+            // 如果channel没有注册过，则创建rpcContext对象
             rpcContext = buildChannelHolder(NettyPoolKey.TransactionRole.RMROLE, resourceManagerRequest.getVersion(),
                 resourceManagerRequest.getApplicationId(), resourceManagerRequest.getTransactionServiceGroup(),
                 resourceManagerRequest.getResourceIds(), channel);
             rpcContext.holdInIdentifiedChannels(IDENTIFIED_CHANNELS);
         } else {
+            // 如果已经注册过，则更新资源
             rpcContext = IDENTIFIED_CHANNELS.get(channel);
             rpcContext.addResources(dbkeySet);
         }
         if (dbkeySet == null || dbkeySet.isEmpty()) { return; }
+        // 注册每个数据库资源
         for (String resourceId : dbkeySet) {
             String clientIp;
             ConcurrentMap<Integer, RpcContext> portMap = CollectionUtils.computeIfAbsent(RM_CHANNELS, resourceId, key -> new ConcurrentHashMap<>())
@@ -168,16 +176,21 @@ public class ChannelManager {
         }
     }
 
+    // 更新rm的资源信息
     private static void updateChannelsResource(String resourceId, String clientIp, String applicationId) {
+        // resourceId -> applicationId -> ip -> port -> RpcContext
         ConcurrentMap<Integer, RpcContext> sourcePortMap = RM_CHANNELS.get(resourceId).get(applicationId).get(clientIp);
         for (ConcurrentMap.Entry<String, ConcurrentMap<String, ConcurrentMap<String, ConcurrentMap<Integer,
             RpcContext>>>> rmChannelEntry : RM_CHANNELS.entrySet()) {
+            // 资源已经注册过，跳过
             if (rmChannelEntry.getKey().equals(resourceId)) { continue; }
             ConcurrentMap<String, ConcurrentMap<String, ConcurrentMap<Integer,
                 RpcContext>>> applicationIdMap = rmChannelEntry.getValue();
+            // 应用不同，跳过
             if (!applicationIdMap.containsKey(applicationId)) { continue; }
             ConcurrentMap<String, ConcurrentMap<Integer,
                 RpcContext>> clientIpMap = applicationIdMap.get(applicationId);
+            // ip不同，跳过
             if (!clientIpMap.containsKey(clientIp)) { continue; }
             ConcurrentMap<Integer, RpcContext> portMap = clientIpMap.get(clientIp);
             for (ConcurrentMap.Entry<Integer, RpcContext> portMapEntry : portMap.entrySet()) {
@@ -232,6 +245,7 @@ public class ChannelManager {
         Integer clientPort = ChannelUtil.getClientPortFromChannel(channel);
         NettyPoolKey.TransactionRole clientRole = rpcContext.getClientRole();
         if (clientRole == NettyPoolKey.TransactionRole.TMROLE) {
+            // applicationId + ip
             String clientIdentified = rpcContext.getApplicationId() + Constants.CLIENT_ID_SPLIT_CHAR
                 + ChannelUtil.getClientIpFromChannel(channel);
             if (!TM_CHANNELS.containsKey(clientIdentified)) {
@@ -276,6 +290,7 @@ public class ChannelManager {
     public static Channel getChannel(String resourceId, String clientId) {
         Channel resultChannel = null;
 
+        // ApplicationId:IP:Port
         String[] clientIdInfo = readClientId(clientId);
 
         if (clientIdInfo == null || clientIdInfo.length != 3) {
@@ -286,6 +301,7 @@ public class ChannelManager {
         String targetIP = clientIdInfo[1];
         int targetPort = Integer.parseInt(clientIdInfo[2]);
 
+        // resourceId -> applicationId -> ip -> port -> RpcContext
         ConcurrentMap<String, ConcurrentMap<String, ConcurrentMap<Integer,
             RpcContext>>> applicationIdMap = RM_CHANNELS.get(resourceId);
 
@@ -311,6 +327,7 @@ public class ChannelManager {
                             LOGGER.debug("Just got exactly the one {} for {}", channel, clientId);
                         }
                     } else {
+                        // 不活跃了，关闭连接
                         if (portMapOnTargetIP.remove(targetPort, exactRpcContext)) {
                             if (LOGGER.isInfoEnabled()) {
                                 LOGGER.info("Removed inactive {}", channel);
@@ -320,6 +337,7 @@ public class ChannelManager {
                 }
 
                 // The original channel was broken, try another one.
+                // 获取同一个ip上的连接
                 if (resultChannel == null) {
                     for (ConcurrentMap.Entry<Integer, RpcContext> portMapOnTargetIPEntry : portMapOnTargetIP
                         .entrySet()) {
@@ -345,6 +363,7 @@ public class ChannelManager {
             }
 
             // No channel on the this app node, try another one.
+            // 获取同一个applicationId上的
             if (resultChannel == null) {
                 for (ConcurrentMap.Entry<String, ConcurrentMap<Integer, RpcContext>> ipMapEntry : ipMap
                     .entrySet()) {
@@ -396,6 +415,7 @@ public class ChannelManager {
 
     }
 
+    // 尝试同一个resourceId下的
     private static Channel tryOtherApp(ConcurrentMap<String, ConcurrentMap<String, ConcurrentMap<Integer,
         RpcContext>>> applicationIdMap, String myApplicationId) {
         Channel chosenChannel = null;

@@ -56,7 +56,8 @@ public class TransactionalTemplate {
             throw new ShouldNeverHappenException("transactionInfo does not exist");
         }
         // 1.1 Get current transaction, if not null, the tx role is 'GlobalTransactionRole.Participant'.
-        // 获取当前全局事务，如果没有则创建
+        // 获取当前全局事务
+        // 如果不为空，则当前是事务参与者的角色
         GlobalTransaction tx = GlobalTransactionContext.getCurrent();
 
         // 1.2 Handle the transaction propagation.
@@ -113,6 +114,7 @@ public class TransactionalTemplate {
             }
 
             // 1.3 If null, create new transaction with role 'GlobalTransactionRole.Launcher'.
+            // 以事务发起者的角色开启一个新事务
             if (tx == null) {
                 tx = GlobalTransactionContext.createNew();
             }
@@ -132,6 +134,7 @@ public class TransactionalTemplate {
                     rs = business.execute();
                 } catch (Throwable ex) {
                     // 3. The needed business exception to rollback.
+                    // 回滚事务
                     completeTransactionAfterThrowing(txInfo, tx, ex);
                     throw ex;
                 }

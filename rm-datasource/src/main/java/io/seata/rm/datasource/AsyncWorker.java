@@ -77,6 +77,7 @@ public class AsyncWorker {
     }
 
     public BranchStatus branchCommit(String xid, long branchId, String resourceId) {
+        // 将分支提交信息包装成 Phase2Context 插入内存中的异步提交队列，异步删除undoLog
         Phase2Context context = new Phase2Context(xid, branchId, resourceId);
         addToCommitQueue(context);
         return BranchStatus.PhaseTwo_Committed;

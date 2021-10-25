@@ -28,15 +28,19 @@ public class GlobalLockTemplate {
     public Object execute(GlobalLockExecutor executor) throws Throwable {
         boolean alreadyInGlobalLock = RootContext.requireGlobalLock();
         if (!alreadyInGlobalLock) {
+            // 其实就是在RootContext设置一个标志位
             RootContext.bindGlobalLockFlag();
         }
 
         // set my config to config holder so that it can be access in further execution
         // for example, LockRetryController can access it with config holder
+        // @@GlobalTransactional 注解有可能会嵌套
+        // 所以先把上一个配置拿出来，替换成当前的，当方法执行完，再把原来的放回去
         GlobalLockConfig myConfig = executor.getGlobalLockConfig();
         GlobalLockConfig previousConfig = GlobalLockConfigHolder.setAndReturnPrevious(myConfig);
 
         try {
+            // 执行被代理的方法
             return executor.execute();
         } finally {
             // only unbind when this is the root caller.

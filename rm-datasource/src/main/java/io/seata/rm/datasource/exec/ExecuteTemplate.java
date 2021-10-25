@@ -66,8 +66,9 @@ public class ExecuteTemplate {
                                                      StatementProxy<S> statementProxy,
                                                      StatementCallback<T, S> statementCallback,
                                                      Object... args) throws SQLException {
-        // 没有处于全局事务
-        // 或者没有 GlobalLock 修饰，则该数据不需要纳入 seata 框架下管理
+        // 方法上加了 GlobalLock 注解
+        // 是at模式
+        // 都得执行代理后的逻辑
         if (!RootContext.requireGlobalLock() && BranchType.AT != RootContext.getBranchType()) {
             // Just work as original statement
             return statementCallback.execute(statementProxy.getTargetStatement(), args);

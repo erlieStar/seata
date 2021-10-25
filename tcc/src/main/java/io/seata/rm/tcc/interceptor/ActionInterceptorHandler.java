@@ -40,6 +40,8 @@ import java.util.Map;
  * Handler the TCC Participant Aspect : Setting Context, Creating Branch Record
  *
  * @author zhangsen
+ *
+ * 参考博客：https://chenjiayang.me/2019/05/02/seata-tcc/
  */
 public class ActionInterceptorHandler {
 

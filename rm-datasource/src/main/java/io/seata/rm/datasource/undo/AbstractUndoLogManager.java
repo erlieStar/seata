@@ -328,6 +328,7 @@ public abstract class AbstractUndoLogManager implements UndoLogManager {
                 // to prevent the local transaction of the first phase of other programs from being correctly submitted.
                 // See https://github.com/seata/seata/issues/489
 
+                //
                 if (exists) {
                     deleteUndoLog(xid, branchId, conn);
                     conn.commit();
@@ -336,6 +337,7 @@ public abstract class AbstractUndoLogManager implements UndoLogManager {
                             State.GlobalFinished.name());
                     }
                 } else {
+                    // 不存在说明一阶段有异常，插入一条终止状态的undoLog，防止一阶段因为超时等问题，悬挂的事务提交又在补偿方法之后达到
                     insertUndoLogWithGlobalFinished(xid, branchId, UndoLogParserFactory.getInstance(), conn);
                     conn.commit();
                     if (LOGGER.isInfoEnabled()) {

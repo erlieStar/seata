@@ -253,10 +253,13 @@ public class ConnectionProxy extends AbstractConnectionProxy {
             recognizeLockKeyConflictException(e, context.buildLockKeys());
         }
         try {
+            // 插入undolog
             UndoLogManagerFactory.getUndoLogManager(this.getDbType()).flushUndoLogs(this);
+            // 将业务修改 和 undolog 一起插入
             targetConnection.commit();
         } catch (Throwable ex) {
             LOGGER.error("process connectionProxy commit error: {}", ex.getMessage(), ex);
+            // 汇报分支状态为失败
             report(false);
             throw new SQLException(ex);
         }
