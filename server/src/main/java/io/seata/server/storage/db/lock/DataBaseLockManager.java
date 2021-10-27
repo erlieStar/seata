@@ -53,6 +53,9 @@ public class DataBaseLockManager extends AbstractLockManager implements Initiali
         locker = new DataBaseLocker(lockStoreDataSource);
     }
 
+    /**
+     * 根据 xid branchId 从 lock_table 表中删除记录
+     */
     @Override
     public boolean releaseLock(BranchSession branchSession) throws TransactionException {
         try {

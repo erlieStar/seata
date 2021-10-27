@@ -179,7 +179,6 @@ public class GlobalSession implements SessionLifecycle, SessionStorable {
         this.status = GlobalStatus.Begin;
         this.beginTime = System.currentTimeMillis();
         this.active = true;
-        // 观察者模式
         for (SessionLifecycleListener lifecycleListener : lifecycleListeners) {
             lifecycleListener.onBegin(this);
         }

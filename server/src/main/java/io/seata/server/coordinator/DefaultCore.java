@@ -44,7 +44,7 @@ import static io.seata.server.session.BranchSessionHandler.CONTINUE;
 
 /**
  * The type Default core.
- *
+ * https://zhuanlan.zhihu.com/p/61981170
  * @author sharajava
  */
 public class DefaultCore implements Core {
@@ -151,6 +151,7 @@ public class DefaultCore implements Core {
         // 根据xid找到全局事务对象GlobalSession
         GlobalSession globalSession = SessionHolder.findGlobalSession(xid);
         if (globalSession == null) {
+            // 已经被commit过了，直接返回成功
             return GlobalStatus.Finished;
         }
         // 添加监听器
@@ -159,9 +160,11 @@ public class DefaultCore implements Core {
 
         boolean shouldCommit = SessionHolder.lockAndExecute(globalSession, () -> {
             // Highlight: Firstly, close the session, then no more branch can be registered.
-            // 先关闭session，再清除，这样其他分支不能注册
+            // 关闭 GlobalSession 防止再次有新的 BranchSession 注册进来
             globalSession.closeAndClean();
             if (globalSession.getStatus() == GlobalStatus.Begin) {
+                // 判断是否可以异步提交
+                // 目前只有at模式可以异步提交，因为是通过undolog的方式去做的
                 if (globalSession.canBeCommittedAsync()) {
                     globalSession.asyncCommit();
                     return false;
@@ -173,6 +176,8 @@ public class DefaultCore implements Core {
             return false;
         });
 
+        // 同步提交
+        // XA/TCC只能同步提交
         if (shouldCommit) {
             boolean success = doGlobalCommit(globalSession, false);
             //If successful and all remaining branches can be committed asynchronously, do async commit.
@@ -183,6 +188,8 @@ public class DefaultCore implements Core {
                 return globalSession.getStatus();
             }
         } else {
+            // 异步提交
+            // 只有AT模式能异步提交
             return globalSession.getStatus() == GlobalStatus.AsyncCommitting ? GlobalStatus.Committed : globalSession.getStatus();
         }
     }
@@ -194,6 +201,7 @@ public class DefaultCore implements Core {
     public boolean doGlobalCommit(GlobalSession globalSession, boolean retrying) throws TransactionException {
         boolean success = true;
         // start committing event
+        // 发布事件
         eventBus.post(new GlobalTransactionEvent(globalSession.getTransactionId(), GlobalTransactionEvent.ROLE_TC,
             globalSession.getTransactionName(), globalSession.getApplicationId(), globalSession.getTransactionServiceGroup(),
             globalSession.getBeginTime(), null, globalSession.getStatus()));
@@ -209,6 +217,7 @@ public class DefaultCore implements Core {
                 }
 
                 BranchStatus currentStatus = branchSession.getStatus();
+                // 一阶段失败
                 if (currentStatus == BranchStatus.PhaseOne_Failed) {
                     globalSession.removeBranch(branchSession);
                     return CONTINUE;
@@ -284,6 +293,7 @@ public class DefaultCore implements Core {
     public GlobalStatus rollback(String xid) throws TransactionException {
         GlobalSession globalSession = SessionHolder.findGlobalSession(xid);
         if (globalSession == null) {
+            // 已经回滚
             return GlobalStatus.Finished;
         }
         globalSession.addSessionLifecycleListener(SessionHolder.getRootSessionManager());

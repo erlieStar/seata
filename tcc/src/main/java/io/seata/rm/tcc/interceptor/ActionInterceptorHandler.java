@@ -69,13 +69,15 @@ public class ActionInterceptorHandler {
         actionContext.setActionName(actionName);
 
         //Creating Branch Record
-        // 封装tcc行为日志，并注册分支事务
+        // 注册分支事务
         String branchId = doTccActionLogStore(method, arguments, businessAction, actionContext);
         actionContext.setBranchId(branchId);
         //MDC put branchId
         MDC.put(RootContext.MDC_KEY_BRANCH_ID, branchId);
 
         //set the parameter whose type is BusinessActionContext
+        // 如果被代理的方法中有BusinessActionContext类型，则把actionContext设置进去
+        // 这样方法执行的时候就能拿到actionContext了
         Class<?>[] types = method.getParameterTypes();
         int argIndex = 0;
         for (Class<?> cls : types) {
@@ -88,6 +90,7 @@ public class ActionInterceptorHandler {
         //the final parameters of the try method
         ret.put(Constants.TCC_METHOD_ARGUMENTS, arguments);
         //the final result
+        // 执行被代理方法，并设置结果
         ret.put(Constants.TCC_METHOD_RESULT, targetCallback.execute());
         return ret;
     }
@@ -105,13 +108,16 @@ public class ActionInterceptorHandler {
                                          BusinessActionContext actionContext) {
         String actionName = actionContext.getActionName();
         String xid = actionContext.getXid();
-        //
+        // 将方法中用@BusinessActionContextParameter修饰的入参名字即值，转成map返回
         Map<String, Object> context = fetchActionRequestContext(method, arguments);
+        // 设置开始时间
         context.put(Constants.ACTION_START_TIME, System.currentTimeMillis());
 
         //init business context
+        // 往context设置commit和rollback的方法名
         initBusinessContext(context, method, businessAction);
         //Init running environment context
+        // 往context设置本机ip地址
         initFrameworkContext(context);
         actionContext.setActionContext(context);
 

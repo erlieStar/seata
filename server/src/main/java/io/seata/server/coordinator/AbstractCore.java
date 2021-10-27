@@ -73,15 +73,18 @@ public abstract class AbstractCore implements Core {
     @Override
     public Long branchRegister(BranchType branchType, String resourceId, String clientId, String xid,
                                String applicationData, String lockKeys) throws TransactionException {
+        // 根据 xid 从 SessionManager 中获取到 GlobalSession
         GlobalSession globalSession = assertGlobalSessionNotNull(xid, false);
         return SessionHolder.lockAndExecute(globalSession, () -> {
             globalSessionStatusCheck(globalSession);
             globalSession.addSessionLifecycleListener(SessionHolder.getRootSessionManager());
+            // 创建新的分支事务即 branchSession
             BranchSession branchSession = SessionHelper.newBranchByGlobal(globalSession, branchType, resourceId,
                     applicationData, lockKeys, clientId);
             MDC.put(RootContext.MDC_KEY_BRANCH_ID, String.valueOf(branchSession.getBranchId()));
             branchSessionLock(globalSession, branchSession);
             try {
+                // 将 branchSession 加到 globalSession 的属性中
                 globalSession.addBranch(branchSession);
             } catch (RuntimeException ex) {
                 branchSessionUnlock(branchSession);
