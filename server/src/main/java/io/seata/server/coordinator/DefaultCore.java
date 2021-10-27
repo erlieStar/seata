@@ -235,11 +235,14 @@ public class DefaultCore implements Core {
                                     "Committing branch transaction[{}], status: PhaseTwo_CommitFailed_Unretryable, please check the business log.", branchSession.getBranchId());
                                 return CONTINUE;
                             } else {
+                                // 分支事务，不能异步提交，并且还不重试，全局事务执行失败
                                 SessionHelper.endCommitFailed(globalSession);
                                 LOGGER.error("Committing global transaction[{}] finally failed, caused by branch transaction[{}] commit failed.", globalSession.getXid(), branchSession.getBranchId());
                                 return false;
                             }
                         default:
+                            // 当前是否正在重试
+                            // retrying=true，说明是从重试队列进来的任务，不用再往重试队列放了
                             if (!retrying) {
                                 globalSession.queueToRetryCommit();
                                 return false;
@@ -265,18 +268,22 @@ public class DefaultCore implements Core {
                 return CONTINUE;
             });
             // Return if the result is not null
+            // result 不为null 则为 false
             if (result != null) {
                 return result;
             }
             //If has branch and not all remaining branches can be committed asynchronously,
             //do print log and return false
+            // 有分支事务，并且不允许异步提交，说明失败了
             if (globalSession.hasBranch() && !globalSession.canBeCommittedAsync()) {
                 LOGGER.info("Committing global transaction is NOT done, xid = {}.", globalSession.getXid());
                 return false;
             }
         }
         //If success and there is no branch, end the global transaction.
+        // 分支事务全部提交成功了
         if (success && globalSession.getBranchSessions().isEmpty()) {
+            // 全局事务状态改为已提交
             SessionHelper.endCommitted(globalSession);
 
             // committed event
@@ -329,6 +336,7 @@ public class DefaultCore implements Core {
         } else {
             Boolean result = SessionHelper.forEach(globalSession.getReverseSortedBranches(), branchSession -> {
                 BranchStatus currentBranchStatus = branchSession.getStatus();
+                // 分支事务在一阶段失败了，说明事务更改没有写入数据库
                 if (currentBranchStatus == BranchStatus.PhaseOne_Failed) {
                     globalSession.removeBranch(branchSession);
                     return CONTINUE;
@@ -341,11 +349,13 @@ public class DefaultCore implements Core {
                             LOGGER.info("Rollback branch transaction successfully, xid = {} branchId = {}", globalSession.getXid(), branchSession.getBranchId());
                             return CONTINUE;
                         case PhaseTwo_RollbackFailed_Unretryable:
+                            // 事务回滚失败
                             SessionHelper.endRollbackFailed(globalSession);
                             LOGGER.info("Rollback branch transaction fail and stop retry, xid = {} branchId = {}", globalSession.getXid(), branchSession.getBranchId());
                             return false;
                         default:
                             LOGGER.info("Rollback branch transaction fail and will retry, xid = {} branchId = {}", globalSession.getXid(), branchSession.getBranchId());
+                            // 如果当前的 globalSession 不是从重试队列来的，则放入重试队列
                             if (!retrying) {
                                 globalSession.queueToRetryRollback();
                             }
@@ -372,6 +382,8 @@ public class DefaultCore implements Core {
             // 2. New branch transaction has data association with rollback branch transaction
             // The second query can solve the first problem, and if it is the second problem, it may cause a rollback
             // failure due to data changes.
+            // 加这段代码对应的issues，没精力看原因了，有兴趣可以看一下
+            // https://github.com/seata/seata/issues/1812
             GlobalSession globalSessionTwice = SessionHolder.findGlobalSession(globalSession.getXid());
             if (globalSessionTwice != null && globalSessionTwice.hasBranch()) {
                 LOGGER.info("Rollbacking global transaction is NOT done, xid = {}.", globalSession.getXid());
@@ -379,6 +391,7 @@ public class DefaultCore implements Core {
             }
         }
         if (success) {
+            // 事务状态更改为回滚成功
             SessionHelper.endRollbacked(globalSession);
 
             // rollbacked event
