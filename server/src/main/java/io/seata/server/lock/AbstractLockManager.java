@@ -51,6 +51,7 @@ public abstract class AbstractLockManager implements LockManager {
             return true;
         }
         // get locks of branch
+        // 创建 RowLock 集合，一条加锁记录对应一个RowLock对象
         List<RowLock> locks = collectRowLocks(branchSession);
         if (CollectionUtils.isEmpty(locks)) {
             // no lock
@@ -123,6 +124,7 @@ public abstract class AbstractLockManager implements LockManager {
             return locks;
         }
         String xid = branchSession.getXid();
+        // 得到资源id，也就是数据库连接url
         String resourceId = branchSession.getResourceId();
         long transactionId = branchSession.getTransactionId();
 
@@ -157,13 +159,17 @@ public abstract class AbstractLockManager implements LockManager {
                                             Long branchID) {
         List<RowLock> locks = new ArrayList<RowLock>();
 
+        // 对多个记录加锁，中间使用；分隔
         String[] tableGroupedLockKeys = lockKey.split(";");
         for (String tableGroupedLockKey : tableGroupedLockKeys) {
+            // 表名和记录主键值之间用：分隔
             int idx = tableGroupedLockKey.indexOf(":");
             if (idx < 0) {
                 return locks;
             }
+            // 要加锁的表名
             String tableName = tableGroupedLockKey.substring(0, idx);
+            // 加锁的记录主键值，如果需要一次加锁多条记录，记录之间用，分隔
             String mergedPKs = tableGroupedLockKey.substring(idx + 1);
             if (StringUtils.isBlank(mergedPKs)) {
                 return locks;
@@ -172,6 +178,7 @@ public abstract class AbstractLockManager implements LockManager {
             if (pks == null || pks.length == 0) {
                 return locks;
             }
+            // 一个主键创建一个RowLock对象
             for (String pk : pks) {
                 if (StringUtils.isNotBlank(pk)) {
                     RowLock rowLock = new RowLock();

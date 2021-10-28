@@ -104,6 +104,7 @@ public class LockStoreDataBaseDAO implements LockStore {
         Set<String> dbExistedRowKeys = new HashSet<>();
         boolean originalAutoCommit = true;
         if (lockDOs.size() > 1) {
+            // 过滤掉重复的加锁记录
             lockDOs = lockDOs.stream().filter(LambdaUtils.distinctByKey(LockDO::getRowKey)).collect(Collectors.toList());
         }
         try {
@@ -118,6 +119,8 @@ public class LockStoreDataBaseDAO implements LockStore {
             }
             boolean canLock = true;
             //query
+            // select xid, transaction_id, branch_id, resource_id, table_name, pk, row_key, gmt_create, gmt_modified
+            // from lock_table where row_key in ('?', '?', '?')
             String checkLockSQL = LockStoreSqlFactory.getLogStoreSql(dbType).getCheckLockableSql(lockTable, sj.toString());
             ps = conn.prepareStatement(checkLockSQL);
             for (int i = 0; i < lockDOs.size(); i++) {
@@ -127,6 +130,7 @@ public class LockStoreDataBaseDAO implements LockStore {
             String currentXID = lockDOs.get(0).getXid();
             while (rs.next()) {
                 String dbXID = rs.getString(ServerTableColumnsName.LOCK_TABLE_XID);
+                // 查出来的记录的row_key和当前的不一样，则说明被别的事务加锁了
                 if (!StringUtils.equals(dbXID, currentXID)) {
                     if (LOGGER.isInfoEnabled()) {
                         String dbPk = rs.getString(ServerTableColumnsName.LOCK_TABLE_PK);
@@ -138,13 +142,16 @@ public class LockStoreDataBaseDAO implements LockStore {
                     canLock &= false;
                     break;
                 }
+                // 已经被自己加锁的记录
                 dbExistedRowKeys.add(rs.getString(ServerTableColumnsName.LOCK_TABLE_ROW_KEY));
             }
 
+            // 有记录已经加过锁，回滚退出
             if (!canLock) {
                 conn.rollback();
                 return false;
             }
+            // 此次需要加锁的记录
             List<LockDO> unrepeatedLockDOs = null;
             if (CollectionUtils.isNotEmpty(dbExistedRowKeys)) {
                 unrepeatedLockDOs = lockDOs.stream().filter(lockDO -> !dbExistedRowKeys.contains(lockDO.getRowKey()))
@@ -157,6 +164,7 @@ public class LockStoreDataBaseDAO implements LockStore {
                 return true;
             }
             //lock
+            // 执行加锁操作
             if (unrepeatedLockDOs.size() == 1) {
                 LockDO lockDO = unrepeatedLockDOs.get(0);
                 if (!doAcquireLock(conn, lockDO)) {
@@ -212,6 +220,7 @@ public class LockStoreDataBaseDAO implements LockStore {
                 sj.add("?");
             }
             //batch release lock
+            // delete from lock_table where xid = ? and row_key in (?, ?, ?)
             String batchDeleteSQL = LockStoreSqlFactory.getLogStoreSql(dbType).getBatchDeleteLockSql(lockTable, sj.toString());
             ps = conn.prepareStatement(batchDeleteSQL);
             ps.setString(1, lockDOs.get(0).getXid());

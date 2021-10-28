@@ -227,8 +227,10 @@ public class ConnectionProxy extends AbstractConnectionProxy {
 
     private void doCommit() throws SQLException {
         if (context.inGlobalTransaction()) {
+            // 提交分支事务
             processGlobalTransactionCommit();
         } else if (context.isGlobalLockRequire()) {
+            // 处理被 GlobalLock 修饰的方法
             processLocalCommitWithGlobalLocks();
         } else {
             targetConnection.commit();
@@ -236,6 +238,7 @@ public class ConnectionProxy extends AbstractConnectionProxy {
     }
 
     private void processLocalCommitWithGlobalLocks() throws SQLException {
+        // 查询是否能获取到锁
         checkLock(context.buildLockKeys());
         try {
             targetConnection.commit();
@@ -336,6 +339,7 @@ public class ConnectionProxy extends AbstractConnectionProxy {
             if (LOCK_RETRY_POLICY_BRANCH_ROLLBACK_ON_CONFLICT) {
                 return callable.call();
             } else {
+                // 获锁冲突时，执行重试策略
                 return doRetryOnLockConflict(callable);
             }
         }
