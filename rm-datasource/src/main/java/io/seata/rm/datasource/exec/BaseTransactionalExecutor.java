@@ -109,7 +109,7 @@ public abstract class BaseTransactionalExecutor<T, S extends Statement> implemen
             statementProxy.getConnectionProxy().bind(xid);
         }
 
-        // 方法被 @GlobalLock 修饰，需要设置全局锁标识
+        // 方法被 @GlobalLock 修饰，将值设置为true
         statementProxy.getConnectionProxy().setGlobalLockRequire(RootContext.requireGlobalLock());
         return doExecute(args);
     }

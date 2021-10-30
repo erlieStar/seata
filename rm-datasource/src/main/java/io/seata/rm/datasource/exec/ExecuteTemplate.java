@@ -74,14 +74,17 @@ public class ExecuteTemplate {
             return statementCallback.execute(statementProxy.getTargetStatement(), args);
         }
 
+        // 获取数据库类型
         String dbType = statementProxy.getConnectionProxy().getDbType();
         if (CollectionUtils.isEmpty(sqlRecognizers)) {
+            // 获取到sql语句解析器
             sqlRecognizers = SQLVisitorFactory.get(
                     statementProxy.getTargetSQL(),
                     dbType);
         }
         Executor<T> executor;
         if (CollectionUtils.isEmpty(sqlRecognizers)) {
+            // 没有找到合适的sql语句解析器，则执行使用原生的Statement执行sql
             executor = new PlainExecutor<>(statementProxy, statementCallback);
         } else {
             if (sqlRecognizers.size() == 1) {
@@ -106,6 +109,7 @@ public class ExecuteTemplate {
                         break;
                 }
             } else {
+                // 一条sql包含多个update语句等
                 executor = new MultiExecutor<>(statementProxy, statementCallback, sqlRecognizers);
             }
         }
