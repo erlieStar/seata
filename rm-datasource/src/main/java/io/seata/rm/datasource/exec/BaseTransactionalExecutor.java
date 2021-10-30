@@ -270,6 +270,7 @@ public abstract class BaseTransactionalExecutor<T, S extends Statement> implemen
         if (beforeImage.getRows().isEmpty() && afterImage.getRows().isEmpty()) {
             return;
         }
+        // 修改主键时抛出异常
         if (SQLType.UPDATE == sqlRecognizer.getSQLType()) {
             if (beforeImage.getRows().size() != afterImage.getRows().size()) {
                 throw new ShouldNeverHappenException("Before image size is not equaled to after image size, probably because you updated the primary keys.");
@@ -278,6 +279,7 @@ public abstract class BaseTransactionalExecutor<T, S extends Statement> implemen
         ConnectionProxy connectionProxy = statementProxy.getConnectionProxy();
 
         TableRecords lockKeyRecords = sqlRecognizer.getSQLType() == SQLType.DELETE ? beforeImage : afterImage;
+        // 构建lockKeys
         String lockKeys = buildLockKey(lockKeyRecords);
         if (null != lockKeys) {
             connectionProxy.appendLockKey(lockKeys);
