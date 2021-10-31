@@ -227,7 +227,7 @@ public class ConnectionProxy extends AbstractConnectionProxy {
 
     private void doCommit() throws SQLException {
         if (context.inGlobalTransaction()) {
-            // 提交分支事务
+            // 在全局事务中
             processGlobalTransactionCommit();
         } else if (context.isGlobalLockRequire()) {
             // 处理被 GlobalLock 修饰的方法
@@ -250,7 +250,10 @@ public class ConnectionProxy extends AbstractConnectionProxy {
 
     private void processGlobalTransactionCommit() throws SQLException {
         try {
-            // 注册分支事务，简单理解向server发一个请求，然后server在branch_table表里插入一条记录
+            // 注册分支事务，向tc发一个分支事务注册请求，然后tc在branch_table表里插入一条记录
+            // 注册的时候tc会看事务提交所需要的资源是否能被加锁
+            // 如果能，则注册成功
+            // 如果不能，说明资源正在被别的事务使用，注册失败
             register();
         } catch (TransactionException e) {
             recognizeLockKeyConflictException(e, context.buildLockKeys());
@@ -262,11 +265,12 @@ public class ConnectionProxy extends AbstractConnectionProxy {
             targetConnection.commit();
         } catch (Throwable ex) {
             LOGGER.error("process connectionProxy commit error: {}", ex.getMessage(), ex);
-            // 汇报分支状态为失败
+            // 向tc汇报分支状态为失败
             report(false);
             throw new SQLException(ex);
         }
         if (IS_REPORT_SUCCESS_ENABLE) {
+            // 向tc汇报分支状态为成功
             report(true);
         }
         context.reset();

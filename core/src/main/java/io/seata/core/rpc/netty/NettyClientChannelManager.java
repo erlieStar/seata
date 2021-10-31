@@ -94,7 +94,7 @@ class NettyClientChannelManager {
      */
     Channel acquireChannel(String serverAddress) {
         Channel channelToServer = channels.get(serverAddress);
-        // 当前地址已经存在连接，直接返回
+        // 与当前serverAddress已经存在连接，直接返回
         if (channelToServer != null) {
             channelToServer = getExistAliveChannel(channelToServer, serverAddress);
             if (channelToServer != null) {
@@ -104,6 +104,7 @@ class NettyClientChannelManager {
         if (LOGGER.isInfoEnabled()) {
             LOGGER.info("will connect to " + serverAddress);
         }
+        // 与当前serverAddress不存在连接，新建连接
         Object lockObj = CollectionUtils.computeIfAbsent(channelLocks, serverAddress, key -> new Object());
         synchronized (lockObj) {
             return doConnect(serverAddress);
@@ -165,7 +166,7 @@ class NettyClientChannelManager {
     void reconnect(String transactionServiceGroup) {
         List<String> availList = null;
         try {
-            // 获得与事务分组对应的集群中每台机器地址
+            // 获得事务分组对应的集群中每台机器地址
             availList = getAvailServerList(transactionServiceGroup);
         } catch (Exception e) {
             LOGGER.error("Failed to get available servers: {}", e.getMessage(), e);

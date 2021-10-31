@@ -108,6 +108,7 @@ public abstract class AbstractNettyRemotingClient extends AbstractNettyRemoting 
 
     @Override
     public void init() {
+        // 不断连接seata server
         timerExecutor.scheduleAtFixedRate(new Runnable() {
             @Override
             public void run() {
